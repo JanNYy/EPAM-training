@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/security"
+             xmlns:beans="http://www.springframework.org/schema/beans"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/security
+		http://www.springframework.org/schema/security/spring-security.xsd">
+
+    <!--<http auto-config="true" use-expressions="false">
+        <intercept-url pattern="/login.jsp*" access="IS_AUTHENTICATED_ANONYMOUSLY"/>
+        <intercept-url pattern="/**" access="ROLE_USER" />
+        <form-login login-page='/login.jsp' default-target-url="/index.jsp" always-use-default-target="true"/>
+        <logout logout-url="logout" invalidate-session="true" logout-success-url="/spring_security_login" />
+    </http>-->
+
+    <!--<global-method-security secured-annotations="enabled"/>-->
+
+    <http pattern="/rest/**" create-session="stateless">
+        <intercept-url pattern="/**" access="hasRole('USER')"/>
+        <http-basic />
+        <csrf disabled="true" />
+    </http>
+
+    <http>
+        <!--<intercept-url pattern="/index.jsp" access="isAnonymous()"/>-->
+        <intercept-url pattern="/index.jsp" access="hasAnyRole('USER', 'ANONYMOUS')"/>
+        <intercept-url pattern="/pages/pizzas/" access="hasAnyRole('USER', 'ANONYMOUS')"/>
+        <!--<intercept-url pattern="/**" access="hasRole('USER')" />-->
+        <intercept-url pattern="/**" access="isFullyAuthenticated()"/>
+        <!--<intercept-url pattern="/login.jsp" access="isAnonymous()"/>-->
+        <remember-me/>
+
+        <form-login />
+
+        <!--<form-login login-page='/login.jsp' always-use-default-target="true" default-target-url="/index.jsp"/>-->
+
+       <!-- <intercept-url pattern="/login.jsp" access="isAnonymous()"/>-->
+
+        <!--<intercept-url pattern="/**" access="hasRole('USER')"/>-->
+
+        <!--<intercept-url pattern="/**" access="isAuthenticated()"/>
+        <form-login login-page='/login.jsp' default-target-url="/jsp/pizza/show" always-use-default-target="true"/>-->
+        <!--<logout logout-url="/logout" invalidate-session="true" logout-success-url="/spring_security_login" />-->
+        <logout logout-url="/logout" invalidate-session="true" logout-success-url="/" />
+
+        <anonymous username="guest" granted-authority="ROLE_ANONYMOUS" />
+    </http>
+
+    <!--<authentication-manager>-->
+        <!--<authentication-provider>-->
+            <!--<user-service>-->
+                <!--<user name="andrey" password="123" authorities="ROLE_USER, ROLE_ADMIN" />-->
+                <!--<user name="bob" password="456" authorities="ROLE_USER" />-->
+            <!--</user-service>-->
+        <!--</authentication-provider>-->
+    <!--</authentication-manager>-->
+
+    <authentication-manager>
+        <authentication-provider>
+            <jdbc-user-service data-source-ref="dataSource"
+                               users-by-username-query=
+                                       "SELECT
+                                       name_user as username,
+                                       password as password,
+                                       enabled as enabled
+                                        FROM user
+                                        WHERE
+                                        name_user = ?"
+                               authorities-by-username-query=
+                                       "SELECT name_user as username,
+                                       name_role as authority FROM role, user
+                                       WHERE id_user = id_user_FK AND name_user = ?"/>
+        </authentication-provider>
+    </authentication-manager>
+
+
+</beans:beans>
