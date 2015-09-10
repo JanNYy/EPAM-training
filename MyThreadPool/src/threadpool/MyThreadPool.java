@@ -13,6 +13,7 @@ public class MyThreadPool {
     private final LinkedList<Task> tasksQueue = new LinkedList<Task>();
 
     private boolean isStopped;
+    private boolean isWorkersRun;
 
     private class ThreadPoolWorker extends Thread {
 
@@ -20,14 +21,32 @@ public class MyThreadPool {
 
         public void run() {
             Task task;
-            while (!isStopped)
-            {
+            while (!isStopped) {
                 task = null;
+//                synchronized (tasksQueue)
+//                {
+//                    if (!tasksQueue.isEmpty())
+//                    {
+//                        task = tasksQueue.removeFirst();
+//                        tasksQueue.notify();
+//                    }
+//                }
                 synchronized (tasksQueue)
                 {
+                    while ((tasksQueue.isEmpty())&&(!isStopped))
+                        try
+                        {
+                            tasksQueue.wait(10);
+                        }
+                        catch (InterruptedException e)
+                        {
+                            e.printStackTrace();
+                        }
                     if (!tasksQueue.isEmpty())
+                    {
                         task = tasksQueue.removeFirst();
-                    tasksQueue.notifyAll();
+                        tasksQueue.notify();
+                    }
                 }
                 if (task != null)
                 {
@@ -69,7 +88,7 @@ public class MyThreadPool {
         for (int i = 0; i < numberOfThreads; i++)
         {
             workers[i] = new ThreadPoolWorker();
-            workers[i].start();
+//            workers[i].start();
         }
     }
 
@@ -85,10 +104,16 @@ public class MyThreadPool {
     public void addTask(Task task) {
         checkIsStopped();
         checkTaskIsNull(task);
+        if (!isWorkersRun)
+        {
+            for (int i = 0; i < numberOfThreads; i++)
+                workers[i].start();
+            isWorkersRun = true;
+        }
         synchronized (tasksQueue)
         {
             tasksQueue.addLast(task);
-            tasksQueue.notifyAll();
+            tasksQueue.notify();
         }
     }
 
